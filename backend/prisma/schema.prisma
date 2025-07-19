@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  isActive  Boolean  @default(true)
+  isVerified Boolean @default(false)
+  verificationToken String?
+  resetToken String?
+  resetTokenExpiry DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  userRoles UserRole[]
+  posts     BlogPost[]
+  comments  Comment[]
+  auditLogs AuditLog[]
+  
+  @@map("users")
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique // 'admin', 'subscriber', 'client', 'user'
+  description String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  userRoles   UserRole[]
+  permissions RolePermission[]
+  
+  @@map("roles")
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  name        String @unique // 'read_posts', 'write_posts', 'manage_users', etc.
+  description String?
+  resource    String // 'posts', 'users', 'admin', etc.
+  action      String // 'create', 'read', 'update', 'delete'
+  
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  rolePermissions RolePermission[]
+  
+  @@map("permissions")
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+  
+  assignedAt DateTime @default(now())
+  assignedBy String? // userId who assigned this role
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+  
+  // Relationships
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// Content management
+model BlogPost {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  excerpt     String?
+  content     String
+  status      PostStatus  @default(DRAFT)
+  featured    Boolean     @default(false)
+  publishedAt DateTime?
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Author
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  tags     TagOnPost[]
+  comments Comment[]
+  
+  @@map("blog_posts")
+}
+
+model Tag {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String?
+  
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  posts TagOnPost[]
+  
+  @@map("tags")
+}
+
+model TagOnPost {
+  postId String
+  tagId  String
+  
+  // Relationships
+  post BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([postId, tagId])
+  @@map("tags_on_posts")
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String
+  status    CommentStatus @default(PENDING)
+  
+  // Author
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  
+  // Post
+  postId String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("comments")
+}
+
+model CaseStudy {
+  id          String @id @default(cuid())
+  title       String
+  slug        String @unique
+  client      String
+  industry    String?
+  challenge   String
+  solution    String
+  results     String
+  technologies String[] // Array of technology names
+  featured    Boolean  @default(false)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("case_studies")
+}
+
+model Resource {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  category    String? // 'guide', 'checklist', 'whitepaper', etc.
+  accessLevel AccessLevel  @default(PUBLIC)
+  downloadCount Int        @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("resources")
+}
+
+// Audit logging for security
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // 'login', 'logout', 'create_post', 'delete_user', etc.
+  resource  String?  // 'user', 'post', 'comment', etc.
+  resourceId String? // ID of the affected resource
+  details   Json?    // Additional context
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("audit_logs")
+}
+
+// Enums
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AccessLevel {
+  PUBLIC
+  REGISTERED
+  SUBSCRIBER
+  CLIENT
+  ADMIN
+}
