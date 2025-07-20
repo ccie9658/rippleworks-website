@@ -6,9 +6,16 @@ const prisma = new PrismaClient({
 });
 
 // Graceful shutdown
-process.on('beforeExit', async () => {
+process.on('SIGINT', async () => {
   console.log('🔌 Disconnecting from database...');
   await prisma.$disconnect();
+  process.exit();
+});
+
+process.on('SIGTERM', async () => {
+  console.log('🔌 Disconnecting from database...');
+  await prisma.$disconnect();
+  process.exit();
 });
 
 module.exports = prisma;

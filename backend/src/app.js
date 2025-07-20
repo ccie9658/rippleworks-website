@@ -4,13 +4,16 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const prisma = require('./utils/database');
 
 const app = express();
 
 // Security middleware
-app.use(helmet());
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet());
+}
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'development' ? true : (process.env.FRONTEND_URL || 'http://localhost:5173'),
   credentials: true
 }));
 
@@ -29,18 +32,43 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'RippleWorks API is running',
-    timestamp: new Date().toISOString()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ 
+      status: 'OK', 
+      message: 'RippleWorks API is running',
+      database: 'Connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
-// API routes will be added here
+// Import routes
+const blogRoutes = require('./routes/blogRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const caseStudyRoutes = require('./routes/caseStudyRoutes');
+const adminCaseStudyRoutes = require('./routes/adminCaseStudyRoutes');
+const authRoutes = require('./routes/authRoutes');
+
+// API routes
 app.get('/api', (req, res) => {
   res.json({ message: 'RippleWorks API v1.0' });
 });
+
+app.use('/api/blog', blogRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/case-studies', caseStudyRoutes);
+app.use('/api/admin/case-studies', adminCaseStudyRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

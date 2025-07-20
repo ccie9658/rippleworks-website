@@ -20,6 +20,7 @@ model User {
   isActive  Boolean  @default(true)
   isVerified Boolean @default(false)
   verificationToken String?
+  verificationTokenExpiry DateTime?
   resetToken String?
   resetTokenExpiry DateTime?
   
