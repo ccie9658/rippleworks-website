@@ -223,3 +223,6 @@ public/uploads/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Claude development documentation (contains sensitive implementation details)
+CLAUDE.md

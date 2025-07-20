@@ -20,8 +20,10 @@ RippleWorks is a technology consultancy specializing in:
 ### Backend
 - **Node.js** with Express.js framework
 - **PostgreSQL** database with Prisma ORM
-- **JWT + bcrypt** for authentication
+- **JWT + bcrypt** for authentication and password hashing
 - **Role-based access control** (RBAC) system
+- **ElasticMail SMTP** for email verification and password reset
+- **Nodemailer** for email service management
 
 ### Infrastructure
 - **Cloudways VPS** hosting
@@ -40,6 +42,7 @@ RippleWorks is a technology consultancy specializing in:
 - Node.js (v18+)
 - PostgreSQL database
 - npm or yarn
+- SMTP credentials (ElasticMail for production or console logging for development)
 
 ### Setup
 
@@ -75,7 +78,7 @@ RippleWorks is a technology consultancy specializing in:
    cd frontend
    npm run dev
    
-   # Backend (http://localhost:5000)
+   # Backend (http://localhost:3001)
    cd backend
    npm run dev
    ```
@@ -93,6 +96,7 @@ RippleWorks is a technology consultancy specializing in:
 - `npm run db:migrate` - Run database migrations
 - `npm run db:seed` - Seed database with initial data
 - `npm run db:reset` - Reset database
+- `npm run setup:auth` - Setup initial roles and admin user
 
 ## Project Structure
 
@@ -100,11 +104,23 @@ RippleWorks is a technology consultancy specializing in:
 website/
 ├── frontend/           # React application
 │   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   │   ├── admin/     # Admin panel components
+│   │   │   ├── auth/      # Authentication components
+│   │   │   └── user/      # User-specific components
+│   │   ├── contexts/      # React Context providers
+│   │   ├── pages/         # Page components and routes
+│   │   │   └── admin/     # Admin panel pages
+│   │   └── utils/         # Utility functions and API calls
 │   ├── public/
 │   └── package.json
 ├── backend/            # Express.js API
 │   ├── src/
-│   ├── prisma/
+│   │   ├── routes/        # API route handlers
+│   │   ├── services/      # Business logic services
+│   │   ├── scripts/       # Database and setup scripts
+│   │   └── utils/         # Backend utilities
+│   ├── prisma/           # Database schema and migrations
 │   └── package.json
 ├── docs/              # Development documentation
 └── README.md
@@ -112,39 +128,53 @@ website/
 
 ## Features
 
-### Phase 1 (Current)
+### Phase 1 (Completed)
 - ✅ Project setup with React + Express + PostgreSQL
 - ✅ Brand identity implementation with Tailwind CSS
 - ✅ Database schema with user management and RBAC
 - ✅ Basic homepage with professional design
 
-### Phase 2 (Planned)
-- Public website pages (services, about, contact)
-- Content management system for blog posts
-- Case study templates and management
+### Phase 2 (Completed)
+- ✅ Public website pages (services, about, contact)
+- ✅ Content management system for blog posts
+- ✅ Case study templates and management
 
-### Phase 3 (Planned)  
-- User registration and authentication
-- Role-based access control
-- Administrative panel
+### Phase 3 (Completed)  
+- ✅ Complete JWT-based authentication system
+- ✅ User registration with email verification
+- ✅ Password reset functionality via email
+- ✅ Role-based access control with protected routes
+- ✅ User dashboard with profile management
+- ✅ Administrative panel with content management
+- ✅ Email service integration (ElasticMail + development mode)
+
+### Phase 4 (Planned)
+- Advanced admin features and analytics
+- Enhanced content management capabilities
+- Performance optimization and caching
+- SEO improvements and meta tag management
 
 ## Database Schema
 
 Key entities:
-- **Users** - User accounts with authentication
+- **Users** - User accounts with authentication and email verification
 - **Roles** - Role definitions (admin, subscriber, client, user)
 - **Permissions** - Granular permissions for RBAC
-- **BlogPosts** - Content management for blog
+- **UserRoles** - Many-to-many relationship between users and roles
+- **BlogPosts** - Content management for blog with SEO fields
 - **CaseStudies** - Portfolio project showcases
-- **Resources** - Downloadable content library
+- **Resources** - Downloadable content library with access levels
+- **AuditLogs** - Security audit trail for user actions
 
 ## Security
 
-- JWT-based authentication with refresh tokens
-- bcrypt password hashing
-- Rate limiting and security headers
-- Audit logging for user actions
-- Role-based access control (RBAC)
+- JWT-based authentication with 7-day token expiration
+- bcrypt password hashing with 12 salt rounds
+- Email verification with 24-hour token expiry
+- Password reset with 1-hour secure token expiry
+- Role-based access control (RBAC) with route protection
+- Audit logging for user actions and security events
+- Environment-based email service (development vs production)
 
 ## Contributing
 
